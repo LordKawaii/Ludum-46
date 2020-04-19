@@ -105,6 +105,7 @@ public class GamCon : MonoBehaviour
     public int maxEnergy = 10;
     public Transform energyBar;
     public List<GameObject> hullPoints;
+    public GameObject gameOverScreen;
 
     public GameObject energy;
     EngPool engObjPool;
@@ -172,7 +173,8 @@ public class GamCon : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (gameOver)
+            gameOverScreen.SetActive(true);
     }
 
     IEnumerator EnergyTimer(float interval, int genSpeed, int maxEng, int startEng)
@@ -190,11 +192,13 @@ public class GamCon : MonoBehaviour
                 if (engObjPool.Count() == 1)
                 {
                     newEnergy.transform.position = energyBar.transform.position + new Vector3(engBarSprite.bounds.size.x/2 - 1.3f, 0);
-                    //lastObjPos = newEnergy.transform.position;
+                    lastObjPos = newEnergy.transform.position;
                 }
                 else
                 {
                     newEnergy.transform.position = energyBar.transform.position + new Vector3(engBarSprite.bounds.size.x / 2 - 1.3f, 0) - (new Vector3(.5f, 0f) * (engObjPool.Count() - 1));
+                    if (currentSec != Section.Eng)
+                        newEnergy.transform.position = newEnergy.transform.position + new Vector3(15, 0);
                     //lastObjPos = lastObjPos - new Vector3(.5f, 0f);
                 }
                 //newEnergy.transform.SetParent(scrMan.engScreen.transform);
@@ -241,21 +245,22 @@ public class GamCon : MonoBehaviour
 
     void TakeDamage()
     {
-        GameObject.Destroy(hullPoints[currentHull - 1]);
         currentHull--;
-
-        if (hullPoints.Count == 0)
+        if (currentHull -1 == 0)
             gameOver = true;
+        else
+            GameObject.Destroy(hullPoints[currentHull]);
+        
     }
 
     IEnumerator CheckForDamage(float maxTime, float minTime, EngPool pool)
     {
-        while (true)
+        while (!gameOver)
         {
             float newRadTime = Random.Range(minTime, maxTime);
             yield return new WaitForSeconds(newRadTime);
 
-            if (pool.Count() == 0)
+            if (pool.Count() == 0 && !gameOver)
                 TakeDamage();
         }
 
