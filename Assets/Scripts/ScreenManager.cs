@@ -6,6 +6,7 @@ public class ScreenManager : MonoBehaviour
 {
     public GameObject engScreen;
     public GameObject bridgeScreen;
+    public GameObject secScreen;
 
     bool isEng = true;
 
@@ -24,8 +25,8 @@ public class ScreenManager : MonoBehaviour
                     GamCon.Instance.currentSec = Section.Eng;
                 }
                 break;
+            
             case Section.Bridge:
-
                 bridgeScreen.SetActive(true);
                 if (GamCon.Instance.currentSec == Section.Eng)
                 {
@@ -35,7 +36,17 @@ public class ScreenManager : MonoBehaviour
                         engObj.transform.position = engObj.transform.position + new Vector3(15, 0);
                     }
                 }
+                if (GamCon.Instance.currentSec == Section.Security)
+                    secScreen.SetActive(false);
                 GamCon.Instance.currentSec = Section.Bridge;
+                break;
+            
+            case Section.Security:
+                {
+                    bridgeScreen.SetActive(false);
+                    secScreen.SetActive(true);
+                    GamCon.Instance.currentSec = Section.Security;
+                }
                 break;
         }
         

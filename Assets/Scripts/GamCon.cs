@@ -7,9 +7,18 @@ public enum Section
     Eng,
     Life,
     Shields,
-    Bridge
+    Bridge,
+    Security
 }
-
+/// <summary>
+/// End of Section
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Start of EngPool
+/// </summary>
 public class EngPool
 {
     GameObject[] engObjPool;
@@ -96,7 +105,15 @@ public class EngPool
         return currentPlace;
     }
 }
-
+/// <summary>
+/// End of EngPool
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Start of GameCon
+/// </summary>
 public class GamCon : MonoBehaviour
 {
     public float energyInterval = 1;
@@ -110,12 +127,6 @@ public class GamCon : MonoBehaviour
     public GameObject energy;
     EngPool engObjPool;
 
-    int currentHull = 8;
-    int enegPool;
-    float engSpriteLng;
-    SpriteRenderer engBarSprite;
-    bool gameOver = false;
-
     EngBarCon lsPowerCon;
     public float lifeCheckMin;
     public float lifeCheckMax;
@@ -127,9 +138,22 @@ public class GamCon : MonoBehaviour
     public Section currentSec = Section.Eng;
     [HideInInspector]
     public ScreenManager scrMan;
+    [HideInInspector]
+    public bool gameOver = false;
+    [HideInInspector]
+    public SoundCon sndCon;
+
+    int currentHull = 8;
+    int enegPool;
+    float engSpriteLng;
+    SpriteRenderer engBarSprite;
+    SecurityCon secCon;
+
+    Coroutine dmgLsPool;
+    Coroutine dmgShieldPool;
 
     public static GamCon Instance;
-
+    
     private void Awake()
     {
         ///Set this to be main Game Controller
@@ -145,8 +169,13 @@ public class GamCon : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             engObjPool = new EngPool(maxEnergy);
-            scrMan = gameObject.GetComponent<ScreenManager>();
 
+            //Get Other Controllers
+            secCon = gameObject.GetComponent<SecurityCon>();
+            scrMan = gameObject.GetComponent<ScreenManager>();
+            sndCon = gameObject.GetComponent<SoundCon>();
+            
+            //Get Each Energy Container in Eng
             foreach (GameObject gameObj in GameObject.FindGameObjectsWithTag("EnergyBox"))
             {
                 EngBarCon objCon = gameObj.GetComponent<EngBarCon>();
@@ -166,20 +195,26 @@ public class GamCon : MonoBehaviour
         engBarSprite = energyBar.gameObject.GetComponent<SpriteRenderer>();
         engSpriteLng = energy.GetComponent<SpriteRenderer>().size.x;
         StartCoroutine(EnergyTimer(energyInterval, energyGenSpeed, maxEnergy, startingEnergy));
-        StartCoroutine(CheckForDamage(lifeCheckMax, lifeCheckMin, lsPowerCon.GetEngPool()));
-        StartCoroutine(CheckForDamage(shieldCheckMax, shieldCheckMin, shieldPowerCon.GetEngPool()));
+        
+        //Moved Coroutines to when prob starts
+        //StartCoroutine(CheckForDamage(lifeCheckMax, lifeCheckMin, lsPowerCon.GetEngPool()));
+        //StartCoroutine(CheckForDamage(shieldCheckMax, shieldCheckMin, shieldPowerCon.GetEngPool()));
+        //StartCoroutine(CheckForDamage(secCon.maxTime, secCon.minTime, secCon));
     }
 
     // Update is called once per frame
     void Update()
     {
         if (gameOver)
+        {
             gameOverScreen.SetActive(true);
+        }
+        else
+            CheckEngPool();
     }
 
     IEnumerator EnergyTimer(float interval, int genSpeed, int maxEng, int startEng)
     {
-        int currentEng = startEng;
         Vector3 lastObjPos = Vector3.zero;
 
         while (true)
@@ -199,10 +234,7 @@ public class GamCon : MonoBehaviour
                     newEnergy.transform.position = energyBar.transform.position + new Vector3(engBarSprite.bounds.size.x / 2 - 1.3f, 0) - (new Vector3(.5f, 0f) * (engObjPool.Count() - 1));
                     if (currentSec != Section.Eng)
                         newEnergy.transform.position = newEnergy.transform.position + new Vector3(15, 0);
-                    //lastObjPos = lastObjPos - new Vector3(.5f, 0f);
                 }
-                //newEnergy.transform.SetParent(scrMan.engScreen.transform);
-                currentEng++;
             }
 
             yield return new WaitForSeconds(interval);
@@ -221,10 +253,40 @@ public class GamCon : MonoBehaviour
         return newEnergy;
     }
 
+    void CheckEngPool()
+    {
+        if (dmgLsPool == null)
+        {
+            if (lsPowerCon.getCount() == 0)
+                dmgLsPool = StartCoroutine(CheckForDamage(lifeCheckMax, lifeCheckMin, lsPowerCon.GetEngPool()));
+        }
+        else
+        {
+            if (lsPowerCon.getCount() > 0)
+                StopCoroutine(dmgLsPool);
+        }
+
+        if (dmgShieldPool == null)
+        {
+            if (shieldPowerCon.getCount() == 0)
+                dmgShieldPool = StartCoroutine(CheckForDamage(shieldCheckMax, shieldCheckMin, shieldPowerCon.GetEngPool()));
+        }
+        else
+        {
+            if (shieldPowerCon.getCount() > 0)
+                StopCoroutine(dmgShieldPool);
+        }
+    }
+
     public void RemoveEng(GameObject engObj)
     {
         engObjPool.RemoveObj(engObj);
         
+    }
+
+    public SecurityCon GetSecurityCon()
+    {
+        return secCon;
     }
 
     public IEnumerator deathCountdown(float time, GameObject obj)
@@ -243,25 +305,49 @@ public class GamCon : MonoBehaviour
         }
     }
 
-    void TakeDamage()
+
+    public void TakeDamage()
     {
         currentHull--;
-        if (currentHull -1 == 0)
+        if (currentHull == 0)
+        {
+            sndCon.PlayPowerDown();
             gameOver = true;
+        }
         else
             GameObject.Destroy(hullPoints[currentHull]);
         
     }
 
-    IEnumerator CheckForDamage(float maxTime, float minTime, EngPool pool)
+    public IEnumerator CheckForDamage(float maxTime, float minTime, EngPool pool)
     {
-        while (!gameOver)
+        while (!gameOver && pool.Count() == 0)
         {
             float newRadTime = Random.Range(minTime, maxTime);
             yield return new WaitForSeconds(newRadTime);
 
+            
+
             if (pool.Count() == 0 && !gameOver)
+            {
                 TakeDamage();
+                sndCon.PlayExplosion();
+            }
+        }
+
+    }
+    public IEnumerator CheckForDamage(float maxTime, float minTime, SecurityCon security, int probSys)
+    {
+        while (!gameOver && security.GetProbs()[probSys])
+        {
+            float newRadTime = Random.Range(minTime, maxTime);
+            yield return new WaitForSeconds(newRadTime);
+
+            if (!gameOver && security.GetProbs()[probSys])
+            {
+                TakeDamage();
+                sndCon.PlayExplosion();
+            }
         }
 
     }

@@ -7,6 +7,8 @@ TagManager:
   - EnergyBox
   - Energy
   - HullPoint
+  - Crew
+  - SecSys
   layers:
   - Default
   - TransparentFX
