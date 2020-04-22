@@ -15,8 +15,19 @@ public class SectionChangeButton : MonoBehaviour
         {
             if (collidersUnderMouse[i].gameObject == gameObject)
             {
-                GamCon.Instance.scrMan.ChangeScreen(section);
+                if (gameObject.tag == "ExitBtn")
+                {
+                    Application.Quit();
+                    Debug.Log("Quitting");
+                }
+                else
+                    GamCon.Instance.scrMan.ChangeScreen(section);
             }
+        }
+
+        if (gameObject.tag == "StartBtn")
+        {
+            GamCon.Instance.gameStart = true;
         }
     }
     // Start is called before the first frame update

@@ -9,10 +9,10 @@ public class EngBarCon : MonoBehaviour
 
     EngPool engPool;
     SpriteRenderer sprite;
-    private void Awake()
+    private void Start()
     {
-        engPool = new EngPool(maxEnergy);
-        sprite = GetComponent<SpriteRenderer>();
+        //engPool = new EngPool(maxEnergy);
+        //sprite = GetComponent<SpriteRenderer>();
     }
 
     public void AddEnergy(GameObject engObj)
@@ -28,6 +28,11 @@ public class EngBarCon : MonoBehaviour
         }
     }
 
+    public void SetupEngPool()
+    {
+        engPool = new EngPool(maxEnergy);
+        sprite = GetComponent<SpriteRenderer>();
+    }
     public int getCount()
     {
         return engPool.Count();

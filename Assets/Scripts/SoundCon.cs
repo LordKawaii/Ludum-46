@@ -13,6 +13,8 @@ public class SoundCon : MonoBehaviour
 
     public AudioClip powerDown;
 
+    public AudioClip screenFlicker;
+
     public AudioSource source1;
     public AudioSource source2;
     public void PlayExplosion()
@@ -76,7 +78,12 @@ public class SoundCon : MonoBehaviour
         //}
     }
 
-    public void PlayPowerDown()
+    public void PlayScreenFlip()
+    {
+        PlaySound(screenFlicker, 1f);
+    }
+
+        public void PlayPowerDown()
     {
         PlaySound(powerDown, 1);
     }

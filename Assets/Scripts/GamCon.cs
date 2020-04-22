@@ -6,6 +6,7 @@ public enum Section
 {
     Eng,
     Life,
+    Start,
     Shields,
     Bridge,
     Security
@@ -123,23 +124,28 @@ public class GamCon : MonoBehaviour
     public Transform energyBar;
     public List<GameObject> hullPoints;
     public GameObject gameOverScreen;
+    public CamCon camCon;
 
     public GameObject energy;
     EngPool engObjPool;
 
-    EngBarCon lsPowerCon;
+    public EngBarCon lsPowerCon;
     public float lifeCheckMin;
     public float lifeCheckMax;
-    EngBarCon shieldPowerCon;
+    public EngBarCon shieldPowerCon;
     public float shieldCheckMin;
     public float shieldCheckMax;
 
     [HideInInspector]
-    public Section currentSec = Section.Eng;
+    public Section currentSec = Section.Start;
     [HideInInspector]
     public ScreenManager scrMan;
     [HideInInspector]
+    public bool gameStart = false;
+    [HideInInspector]
     public bool gameOver = false;
+    [HideInInspector]
+    public bool gameRunning = false;
     [HideInInspector]
     public SoundCon sndCon;
 
@@ -176,14 +182,14 @@ public class GamCon : MonoBehaviour
             sndCon = gameObject.GetComponent<SoundCon>();
             
             //Get Each Energy Container in Eng
-            foreach (GameObject gameObj in GameObject.FindGameObjectsWithTag("EnergyBox"))
-            {
-                EngBarCon objCon = gameObj.GetComponent<EngBarCon>();
-                if (objCon.section == Section.Life)
-                    lsPowerCon = objCon;
-                if (objCon.section == Section.Shields)
-                    shieldPowerCon = objCon;
-            }
+            //foreach (GameObject gameObj in GameObject.FindGameObjectsWithTag("EnergyBox"))
+            //{
+            //    EngBarCon objCon = gameObj.GetComponent<EngBarCon>();
+            //    if (objCon.section == Section.Life)
+            //        lsPowerCon = objCon;
+            //   if (objCon.section == Section.Shields)
+            //        shieldPowerCon = objCon;
+            //}
         }
 
     }
@@ -191,11 +197,13 @@ public class GamCon : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        currentSec = Section.Start;
         enegPool = startingEnergy;
         engBarSprite = energyBar.gameObject.GetComponent<SpriteRenderer>();
         engSpriteLng = energy.GetComponent<SpriteRenderer>().size.x;
-        StartCoroutine(EnergyTimer(energyInterval, energyGenSpeed, maxEnergy, startingEnergy));
-        
+
+        lsPowerCon.SetupEngPool();
+        shieldPowerCon.SetupEngPool();
         //Moved Coroutines to when prob starts
         //StartCoroutine(CheckForDamage(lifeCheckMax, lifeCheckMin, lsPowerCon.GetEngPool()));
         //StartCoroutine(CheckForDamage(shieldCheckMax, shieldCheckMin, shieldPowerCon.GetEngPool()));
@@ -205,12 +213,24 @@ public class GamCon : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (gameStart)
+        {
+            gameRunning = true;
+            StartCoroutine(EnergyTimer(energyInterval, energyGenSpeed, maxEnergy, startingEnergy));
+            StartCoroutine(secCon.GenProb());
+        }
+
         if (gameOver)
         {
             gameOverScreen.SetActive(true);
         }
-        else
+        else if (gameRunning)
             CheckEngPool();
+    }
+    private void LateUpdate()
+    {
+        if (gameStart)
+            gameStart = false;
     }
 
     IEnumerator EnergyTimer(float interval, int genSpeed, int maxEng, int startEng)
@@ -227,6 +247,8 @@ public class GamCon : MonoBehaviour
                 if (engObjPool.Count() == 1)
                 {
                     newEnergy.transform.position = energyBar.transform.position + new Vector3(engBarSprite.bounds.size.x/2 - 1.3f, 0);
+                    if (currentSec != Section.Eng)
+                        newEnergy.transform.position = newEnergy.transform.position + new Vector3(15, 0);
                     lastObjPos = newEnergy.transform.position;
                 }
                 else
@@ -309,6 +331,7 @@ public class GamCon : MonoBehaviour
     public void TakeDamage()
     {
         currentHull--;
+        camCon.ShakeCam();
         if (currentHull == 0)
         {
             sndCon.PlayPowerDown();

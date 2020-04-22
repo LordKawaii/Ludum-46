@@ -19,26 +19,29 @@ public class WarningLightCon : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (CheckEngProb())
-        {
-            if (engLight.gameObject.activeSelf)
+        if (GamCon.Instance.gameRunning) 
+        { 
+            if (CheckEngProb())
             {
-                if (!engLight.isFlashing)
+                if (engLight.gameObject.activeSelf)
                 {
-                    GamCon.Instance.sndCon.PlayEngAlarm();
-                    engLight.SetFlashing(true);
-                    StartCoroutine(FlashLight(engLight, blinkSpeed));
+                    if (!engLight.isFlashing)
+                    {
+                        GamCon.Instance.sndCon.PlayEngAlarm();
+                        engLight.SetFlashing(true);
+                        StartCoroutine(FlashLight(engLight, blinkSpeed));
+                    }
                 }
-            }
             
-        }
-        else
-        {
-            engLight.SetFlashing(false);
-            engLight.TurnOff();
-        }
+            }
+            else
+            {
+                engLight.SetFlashing(false);
+                engLight.TurnOff();
+            }
 
-        CheckSecurityProb();
+            CheckSecurityProb();
+        }
     }
 
     bool CheckEngProb()

@@ -21,8 +21,9 @@ public class SecurityCon : MonoBehaviour
     Coroutine damgBridge;
     private void Start()
     {
-        StartCoroutine(GenProb(maxTime, minTime));
+        
     }
+
 
     public void FixProblem(int probSys, GameObject crew, Vector3 origin)
     {
@@ -75,7 +76,7 @@ public class SecurityCon : MonoBehaviour
         return fixing;
     }
 
-    IEnumerator GenProb(float maxTime, float minTime)
+    public IEnumerator GenProb(float maxTime, float minTime)
     {
         while (!GamCon.Instance.gameOver)
         {
@@ -109,6 +110,44 @@ public class SecurityCon : MonoBehaviour
             }
 
             
+        }
+
+    }
+
+    public IEnumerator GenProb()
+    {
+        while (!GamCon.Instance.gameOver)
+        {
+            float newRadTime = Random.Range(minTime, maxTime);
+            yield return new WaitForSeconds(newRadTime);
+
+            int randSys = Random.Range(0, 3);
+            switch (randSys)
+            {
+                case 0:
+                    if (!isPorbEng && !isFixEng)
+                    {
+                        isPorbEng = true;
+                        damgEng = StartCoroutine(GamCon.Instance.CheckForDamage(maxTime, minTime, this, randSys));
+                    }
+                    break;
+                case 1:
+                    if (!isPorbLs && !isFixLs)
+                    {
+                        isPorbLs = true;
+                        damgLS = StartCoroutine(GamCon.Instance.CheckForDamage(maxTime, minTime, this, randSys));
+                    }
+                    break;
+                case 2:
+                    if (!isPorbBridge && !isFixBridge)
+                    {
+                        isPorbBridge = true;
+                        damgBridge = StartCoroutine(GamCon.Instance.CheckForDamage(maxTime, minTime, this, randSys));
+                    }
+                    break;
+            }
+
+
         }
 
     }

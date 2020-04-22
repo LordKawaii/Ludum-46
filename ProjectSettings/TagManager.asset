@@ -9,6 +9,8 @@ TagManager:
   - HullPoint
   - Crew
   - SecSys
+  - StartBtn
+  - ExitBtn
   layers:
   - Default
   - TransparentFX

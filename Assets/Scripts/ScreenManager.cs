@@ -7,11 +7,15 @@ public class ScreenManager : MonoBehaviour
     public GameObject engScreen;
     public GameObject bridgeScreen;
     public GameObject secScreen;
+    public GameObject startScreen;
 
-    bool isEng = true;
+    public GameObject flicker;
+    float flickerTime = .15f;
 
     public void ChangeScreen(Section section)
     {
+        StartCoroutine(FlickerScreen());
+        GamCon.Instance.sndCon.PlayScreenFlip();
         switch (section)
         {
             case Section.Eng:
@@ -36,6 +40,10 @@ public class ScreenManager : MonoBehaviour
                         engObj.transform.position = engObj.transform.position + new Vector3(15, 0);
                     }
                 }
+                if(GamCon.Instance.currentSec == Section.Start)
+                {
+                    startScreen.SetActive(false);
+                }
                 if (GamCon.Instance.currentSec == Section.Security)
                     secScreen.SetActive(false);
                 GamCon.Instance.currentSec = Section.Bridge;
@@ -50,5 +58,17 @@ public class ScreenManager : MonoBehaviour
                 break;
         }
         
+    }
+
+    IEnumerator FlickerScreen()
+    {
+        bool flickering = true;
+        while (flickering)
+        {
+            flicker.SetActive(true);
+            yield return new WaitForSeconds(flickerTime);
+            flicker.SetActive(false);
+            flickering = false;
+        }
     }
 }
